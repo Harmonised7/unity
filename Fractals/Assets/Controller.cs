@@ -3,9 +3,12 @@ using UnityEngine.UI;
 
 public class Controller : MonoBehaviour
 {
-    public SimSettings settings;
-    public ComputeShader computeShader;
-    public RenderTexture renderTexture;
+    public SimSettings _settings;
+    RenderTexture renderTexture;
+    
+    public ComputeShader _computeShader;
+    ComputeBuffer computeBuffer;
+    private Agent[] agents;
     
     // public Material mat;
     public Vector2 pos, smoothPos;
@@ -14,16 +17,17 @@ public class Controller : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        renderTexture = new RenderTexture(settings.width, settings.height, 24);
-        renderTexture.enableRandomWrite = true;
-        renderTexture.Create();
-
-        computeShader.SetTexture(0, "Result", renderTexture);
-        computeShader.SetFloat("width", settings.width);
-        computeShader.SetFloat("height", settings.height);
-        computeShader.Dispatch(0, renderTexture.width / 8, renderTexture.height / 8, 1);
-       
-        GetComponent<RawImage>().texture = renderTexture;
+        Init();
+    }
+    
+    void FixedUpdate()
+    {
+        HandleInputs();
+        UpdateShader();
+        for (int i = 0; i < _settings.stepsPerFrame; i++)
+        {
+            runSim();
+        }
     }
     
     private void UpdateShader()
@@ -76,9 +80,50 @@ public class Controller : MonoBehaviour
 
     }
 
-    void FixedUpdate()
+    private void Init()
     {
-        HandleInputs();
-        UpdateShader();
+        renderTexture = new RenderTexture(_settings.width, _settings.height, 24);
+        renderTexture.enableRandomWrite = true;
+        renderTexture.Create();
+        
+        GetComponent<RawImage>().texture = renderTexture;
+        
+        agents = new Agent[_settings.agentCount];
+        for (int i = 0; i < agents.Length; i++)
+        {
+            agents[i] = new Agent()
+            {
+                pos = new Vector2(Random.Range(0, _settings.width), Random.Range(0, _settings.height)),
+                angle = Util.getRandomAngle(),
+                speed = Random.Range(_settings.minSpeed, _settings.maxSpeed)
+            };
+        }
+        
+        Util.createAndSetBuffer<Agent>(ref computeBuffer, agents, _computeShader, "agents");
+        _computeShader.SetTexture(0, "Result", renderTexture);
+        _computeShader.SetInt("agentCount", _settings.agentCount);
+        _computeShader.SetFloat("width", _settings.width);
+        _computeShader.SetFloat("height", _settings.height);
     }
+
+    private void runSim()
+    {
+        Util.clearRenderTexture(renderTexture);
+        _computeShader.SetFloat("deltaTime", Time.fixedDeltaTime);
+        _computeShader.SetFloat("time", Time.fixedTime);
+        Util.dispatch(_computeShader, _settings.agentCount);
+    }
+    
+    void OnDestroy()
+    {
+
+        Util.releaseBuffers(computeBuffer);
+    }
+    
+    struct Agent
+    {
+        public Vector2 pos;
+        public float angle;
+        public float speed;
+    };
 }

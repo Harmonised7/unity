@@ -77,3 +77,13 @@ uint hash(uint state)
     state *= 2654435769u;
     return state;
 }
+
+float scaleToRange01(uint state)
+{
+    return state / 4294967295.0;
+}
+
+float2 getDir(float angle)
+{
+    return float2(cos(angle), sin(angle));
+}

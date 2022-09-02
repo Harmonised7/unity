@@ -1,18 +1,44 @@
 // Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+#pragma kernel Update
 
 #include "Assets/Util/Util.hlsl"
 
 // Create a RenderTexture with enableRandomWrite flag and set it
 // with cs.SetTexture
+struct Agent
+{
+    float2 pos;
+    float angle;
+    float speed;
+};
+
 RWTexture2D<float4> Result;
-float width;
-float height;
+float width, height, time, deltaTime;
+
+RWStructuredBuffer<Agent> agents;
 
 [numthreads(8,8,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+void Update(uint3 id : SV_DispatchThreadID)
 {
-    float x = id.x / width;
-    float y = id.y / height;
-    Result[id.xy] = float4(x, y, (x + y) / 2.0, 1);
+    Agent agent = agents[id.x];
+
+    float2 direction = getDir(agent.angle);
+    float2 newPos = agent.pos + direction * agent.speed * deltaTime;
+    float random = hash(time * newPos.x * height);
+
+    if(newPos.x < 0 || newPos.x >= width || newPos.y < 0 || newPos.y >= height)
+    {
+        agent.angle = scaleToRange01(random) * 2 * 3.1415;
+        direction = getDir(agent.angle);
+        newPos = agent.pos + direction * agent.speed * deltaTime;
+    }
+    
+    agent.pos = newPos;
+    Result[int2(agent.pos.x, agent.pos.y)] = 1;
+    
+    // float x = id.x / width;
+    // float y = id.y / height;
+    // Result[id.xy] = float4(sin(x), cos(x), tan(x + y), 1);
+    
+    agents[id.x] = agent;
 }

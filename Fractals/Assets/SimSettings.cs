@@ -7,9 +7,11 @@ public class SimSettings : ScriptableObject
 {
     [Header("Simulation Settings")] [Min(1)]
     public int stepsPerFrame = 1;
-    public int width = 1280;
-    public int height = 720;
-    public int spawnerCount = 100;
+    public int width = 512;
+    public int height = 512;
+    public int agentCount = 100;
+    public float minSpeed = 10;
+    public float maxSpeed = 100;
     
     [Header("Trail Settings")]
     public float trailWeight = 1;

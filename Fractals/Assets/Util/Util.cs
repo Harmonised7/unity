@@ -1,11 +1,12 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 public class Util : MonoBehaviour
 {
+    static ComputeShader clearTextureCompute = (ComputeShader)Resources.Load("ClearTexture");
+    
     public static double mapCapped(double input, double inLow, double inHigh, double outLow, double outHigh)
     {
         return map(limitWithinRange(input, inLow, inHigh), inLow, inHigh, outLow, outHigh);
@@ -40,6 +41,11 @@ public class Util : MonoBehaviour
     
         return p;
     }
+
+    public static float getRandomAngle()
+    {
+        return Random.value * Mathf.PI * 2;
+    }
     
     /*
     // Start is called before the first frame update
@@ -54,4 +60,59 @@ public class Util : MonoBehaviour
         
     }
     */
+    
+    public static void createAndSetBuffer<T>(ref ComputeBuffer buffer, T[] data, ComputeShader cs, string nameID, int kernelIndex = 0)
+    {
+        int stride = System.Runtime.InteropServices.Marshal.SizeOf(typeof(T));
+        createStructuredBuffer<T>(ref buffer, data.Length);
+        buffer.SetData(data);
+        cs.SetBuffer(kernelIndex, nameID, buffer);
+    }
+    
+    public static void createStructuredBuffer<T>(ref ComputeBuffer buffer, int count)
+    {
+        int stride = System.Runtime.InteropServices.Marshal.SizeOf(typeof(T));
+        bool createNewBuffer = buffer == null
+                               || !buffer.IsValid()
+                               || buffer.count != count
+                               || buffer.stride != stride;
+        if (createNewBuffer)
+        {
+            releaseBuffers(buffer);
+            buffer = new ComputeBuffer(count, stride);
+        }
+    }
+    
+    public static void releaseBuffers(params ComputeBuffer[] buffers)
+    {
+        for (int i = 0; i < buffers.Length; i++)
+        {
+            if (buffers[i] != null)
+                buffers[i].Release();
+        }
+    }
+    
+    public static void dispatch(ComputeShader cs, int numIterationsX, int numIterationsY = 1, int numIterationsZ = 1, int kernelIndex = 0)
+    {
+        Vector3Int threadGroupSizes = getThreadGroupSizes(cs, kernelIndex);
+        int numGroupsX = Mathf.CeilToInt(numIterationsX / (float)threadGroupSizes.x);
+        int numGroupsY = Mathf.CeilToInt(numIterationsY / (float)threadGroupSizes.y);
+        int numGroupsZ = Mathf.CeilToInt(numIterationsZ / (float)threadGroupSizes.y);
+        cs.Dispatch(kernelIndex, numGroupsX, numGroupsY, numGroupsZ);
+    }
+    
+    public static Vector3Int getThreadGroupSizes(ComputeShader compute, int kernelIndex = 0)
+    {
+        uint x, y, z;
+        compute.GetKernelThreadGroupSizes(kernelIndex, out x, out y, out z);
+        return new Vector3Int((int)x, (int)y, (int)z);
+    }
+    
+    public static void clearRenderTexture(RenderTexture source)
+    {
+        clearTextureCompute.SetInt("width", source.width);
+        clearTextureCompute.SetInt("height", source.height);
+        clearTextureCompute.SetTexture(0, "Source", source);
+        dispatch(clearTextureCompute, source.width, source.height);
+    }
 }
