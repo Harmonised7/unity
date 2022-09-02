@@ -1,18 +1,30 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class Controller : MonoBehaviour
 {
-    public Material mat;
+    public SimSettings settings;
+    public ComputeShader computeShader;
+    public RenderTexture renderTexture;
+    
+    // public Material mat;
     public Vector2 pos, smoothPos;
     public float scale, smoothScale, angle, smoothAngle;
     
-    /*
     // Start is called before the first frame update
     void Start()
     {
-        
+        renderTexture = new RenderTexture(settings.width, settings.height, 24);
+        renderTexture.enableRandomWrite = true;
+        renderTexture.Create();
+
+        computeShader.SetTexture(0, "Result", renderTexture);
+        computeShader.SetFloat("width", settings.width);
+        computeShader.SetFloat("height", settings.height);
+        computeShader.Dispatch(0, renderTexture.width / 8, renderTexture.height / 8, 1);
+       
+        GetComponent<RawImage>().texture = renderTexture;
     }
-    */
     
     private void UpdateShader()
     {
@@ -30,8 +42,8 @@ public class Controller : MonoBehaviour
         else
             scaleX *= aspect;
         
-        mat.SetVector("_Area", new Vector4(smoothPos.x, smoothPos.y, scaleX, scaleY));
-        mat.SetFloat("_Angle", smoothAngle);
+        // mat.SetVector("_Area", new Vector4(smoothPos.x, smoothPos.y, scaleX, scaleY));
+        // mat.SetFloat("_Angle", smoothAngle);
     }
 
     private void HandleInputs()
