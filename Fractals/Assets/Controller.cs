@@ -1,12 +1,19 @@
+using System;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 
 public class Controller : MonoBehaviour
 {
-    public SimSettings _settings;
-    RenderTexture renderTexture;
+    const int agentKernel = 0;
+    const int diffuseKernel = 1;
+    const int colorKernel = 1;
     
-    public ComputeShader _computeShader;
+    public SimSettings _settings;
+    RenderTexture trailTexture, diffuseTrailTexture, renderTexture;
+    
+    public ComputeShader _agentComputeShader;
     ComputeBuffer computeBuffer;
     private Agent[] agents;
     
@@ -82,36 +89,50 @@ public class Controller : MonoBehaviour
 
     private void Init()
     {
-        renderTexture = new RenderTexture(_settings.width, _settings.height, 24);
-        renderTexture.enableRandomWrite = true;
-        renderTexture.Create();
+        renderTexture = Util.createRenderTexture(_settings.width, _settings.height, 24);
+        trailTexture = Util.createRenderTexture(_settings.width, _settings.height, 24);
+        diffuseTrailTexture = Util.createRenderTexture(_settings.width, _settings.height, 24);
         
-        GetComponent<RawImage>().texture = renderTexture;
+        GetComponent<RawImage>().texture = diffuseTrailTexture;
         
         agents = new Agent[_settings.agentCount];
         for (int i = 0; i < agents.Length; i++)
         {
             agents[i] = new Agent()
             {
-                pos = new Vector2(Random.Range(0, _settings.width), Random.Range(0, _settings.height)),
+                // pos = new Vector2(Random.Range(0, _settings.width), Random.Range(0, _settings.height)),
+                pos = new Vector2(_settings.width/2f, _settings.height/2f),
                 angle = Util.getRandomAngle(),
                 speed = Random.Range(_settings.minSpeed, _settings.maxSpeed)
             };
         }
+
+        Util.createAndSetBuffer(ref computeBuffer, agents, _agentComputeShader, "agents", kernelIndex: agentKernel);
+        _agentComputeShader.SetInt("agentCount", _settings.agentCount);
+        _agentComputeShader.SetTexture(agentKernel, "TrailMap", trailTexture);
         
-        Util.createAndSetBuffer<Agent>(ref computeBuffer, agents, _computeShader, "agents");
-        _computeShader.SetTexture(0, "Result", renderTexture);
-        _computeShader.SetInt("agentCount", _settings.agentCount);
-        _computeShader.SetFloat("width", _settings.width);
-        _computeShader.SetFloat("height", _settings.height);
+        _agentComputeShader.SetTexture(diffuseKernel, "TrailMap", trailTexture);
+        _agentComputeShader.SetTexture(diffuseKernel, "DiffusedTrailMap", diffuseTrailTexture);
+        
+        _agentComputeShader.SetTexture(colorKernel, "TrailMap", trailTexture);
+        _agentComputeShader.SetTexture(colorKernel, "DiffusedTrailMap", diffuseTrailTexture);
     }
 
     private void runSim()
     {
-        Util.clearRenderTexture(renderTexture);
-        _computeShader.SetFloat("deltaTime", Time.fixedDeltaTime);
-        _computeShader.SetFloat("time", Time.fixedTime);
-        Util.dispatch(_computeShader, _settings.agentCount);
+        //Agents
+        _agentComputeShader.SetFloat("width", _settings.width);
+        _agentComputeShader.SetFloat("height", _settings.height);
+        _agentComputeShader.SetFloat("midX", _settings.width/2f);
+        _agentComputeShader.SetFloat("midY", _settings.height/2f);
+        _agentComputeShader.SetFloat("deltaTime", Time.fixedDeltaTime);
+        _agentComputeShader.SetFloat("time", Time.fixedTime);
+        
+        _agentComputeShader.Dispatch(agentKernel, Math.Min(65000, _settings.agentCount), 1, 1);
+        _agentComputeShader.Dispatch(diffuseKernel, _settings.width, _settings.height, 1);
+        // _agentComputeShader.Dispatch(colorKernel, _settings.width, _settings.height, 1);
+        
+        Util.copyRenderTexture(diffuseTrailTexture, trailTexture);
     }
     
     void OnDestroy()

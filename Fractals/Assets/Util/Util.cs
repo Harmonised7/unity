@@ -115,4 +115,19 @@ public class Util : MonoBehaviour
         clearTextureCompute.SetTexture(0, "Source", source);
         dispatch(clearTextureCompute, source.width, source.height);
     }
+
+    public static RenderTexture createRenderTexture(int width, int height, int depth, bool defaultBlack = true)
+    {
+        RenderTexture renderTexture = new RenderTexture(width, height, depth);
+        renderTexture.enableRandomWrite = true;
+        renderTexture.Create();
+        if(defaultBlack)
+            clearRenderTexture(renderTexture);
+        return renderTexture;
+    }
+    
+    public static void copyRenderTexture(Texture source, RenderTexture target)
+    {
+        Graphics.Blit(source, target);
+    }
 }

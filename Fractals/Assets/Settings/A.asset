@@ -13,3 +13,11 @@ MonoBehaviour:
   m_Name: A
   m_EditorClassIdentifier: 
   stepsPerFrame: 1
+  width: 1920
+  height: 1080
+  agentCount: 100000
+  minSpeed: 60
+  maxSpeed: 90
+  trailWeight: 1
+  decayRate: 1
+  diffuseRate: 1
