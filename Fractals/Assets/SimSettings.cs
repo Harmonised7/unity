@@ -16,7 +16,7 @@ public class SimSettings : ScriptableObject
     [Header("Trail Settings")]
     public float trailWeight = 1;
     public float decayRate = 1;
-    public float diffuseRate = 1;
+    public float diffusionRate = 0.25f;
 
     public Specie[] species;
     

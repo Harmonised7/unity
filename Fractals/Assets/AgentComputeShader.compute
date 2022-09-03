@@ -21,7 +21,7 @@ struct Specie
 };
 
 RWTexture2D<float4> TrailMap, DiffusedTrailMap;
-float width, height, midX, midY, time, deltaTime;
+float width, height, midX, midY, time, deltaTime, diffusionRate;
 
 RWStructuredBuffer<Agent> agents;
 StructuredBuffer<Specie> species;
@@ -66,14 +66,17 @@ void Update(uint3 id : SV_DispatchThreadID)
     float weightLeft = sense(agent, -1);
     float weightForward = sense(agent, 0);
     float weightRight = sense(agent, 1);
+    float weight = max(max(weightLeft, weightForward), weightRight);
 
-    if(weightLeft > weightForward && weightLeft > weightRight)
+    if(weight == weightLeft)
         agent.angle -= specie.turnSpeed;
-    else if(weightRight > weightLeft && weightRight > weightForward)
+    else if(weight == weightRight)
         agent.angle += specie.turnSpeed;
 
+    //MAYBE LIMIT EFFECT OF WEIGHT?
+
     float2 direction = getDir(agent.angle);
-    float2 newPos = agent.pos + direction * specie.moveSpeed * deltaTime;
+    float2 newPos = agent.pos + direction * specie.moveSpeed * weight * deltaTime;
 
     while(isOutside(newPos.x, newPos.y, width, height))
     {
@@ -121,7 +124,7 @@ void Diffuse(uint3 id : SV_DispatchThreadID)
     blurredCol = float4(blurredCol.x, blurredCol.y, blurredCol.z, 1);
     // float diffuseWeight = saturate(diffuseRate * deltaTime);
     // blurredCol = originalCol * (1 - diffuseWeight) + blurredCol * (diffuseWeight);
-    DiffusedTrailMap[id.xy] = max(0, blurredCol - 0.01 * deltaTime);
+    DiffusedTrailMap[id.xy] = max(0, blurredCol - diffusionRate * deltaTime);
 }
 
 // #pragma kernel Color
