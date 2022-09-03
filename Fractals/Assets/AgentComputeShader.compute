@@ -32,19 +32,21 @@ float sense(Agent agent, float sensorDegreeMultiplier)
     const float2 sensorMid = agent.pos + getDir(agent.angle + specie.sensorAngleOffset*sensorDegreeMultiplier) * specie.sensorDistanceOffset;
     const int sensorX = sensorMid.x;
     const int sensorY = sensorMid.y;
-    const int startX = limitWithinRange(sensorX-specie.sensorSize, 0, width);
-    const int endX = limitWithinRange(sensorX+specie.sensorSize, 0, width);
-    const int startY = limitWithinRange(sensorY-specie.sensorSize, 0, height);
-    const int endY = limitWithinRange(sensorY+specie.sensorSize, 0, height);
+    // const int startX = limitWithinRange(sensorX-specie.sensorSize, 0, width);
+    // const int endX = limitWithinRange(sensorX+specie.sensorSize, 0, width);
+    // const int startY = limitWithinRange(sensorY-specie.sensorSize, 0, height);
+    // const int endY = limitWithinRange(sensorY+specie.sensorSize, 0, height);
     float sum = 0;
 
     float4 senseWeight = float4(specie.mask, 1) * 2 - 1;
     
-    for(int x = startX; x < endX; ++x)
+    for(int offsetX = -specie.sensorSize; offsetX < specie.sensorSize; ++offsetX)
     {
-        for(int y = startY; y < endY; ++y)
+        for(int offsetY = -specie.sensorSize; offsetY < specie.sensorSize; ++offsetY)
         {
-            sum += dot(senseWeight, TrailMap[int2(x, y)]);
+            int sampleX = limitWithinRange(sensorX + offsetX, 0, width-1);
+            int sampleY = limitWithinRange(sensorY + offsetY, 0, height-1);
+            sum += dot(senseWeight, TrailMap[int2(sampleX, sampleY)]);
         }
     }
     
@@ -58,9 +60,7 @@ void Update(uint3 id : SV_DispatchThreadID)
 {
     Agent agent = agents[id.x];
     Specie specie = species[agent.specieIndex];
-
-    float2 direction = getDir(agent.angle);
-    float2 newPos = agent.pos + direction * specie.moveSpeed * deltaTime;
+    
     float random = scaleToRange01(hash(time*id.x));
 
     float weightLeft = sense(agent, -1);
@@ -72,14 +72,17 @@ void Update(uint3 id : SV_DispatchThreadID)
     else if(weightRight > weightLeft && weightRight > weightForward)
         agent.angle += specie.turnSpeed;
 
-    if(isOutside(newPos.x, newPos.y, width, height))
+    float2 direction = getDir(agent.angle);
+    float2 newPos = agent.pos + direction * specie.moveSpeed * deltaTime;
+
+    while(isOutside(newPos.x, newPos.y, width, height))
     {
         agent.angle = random * 2 * 3.1415;
         direction = getDir(agent.angle);
-        newPos = agent.pos + direction * specie.moveSpeed * deltaTime;
+        newPos = agent.pos + direction * specie.moveSpeed * 10 * deltaTime;
     }
-    if(isOutside(newPos.x, newPos.y, width, height))
-        newPos = float2(midX, midY);
+    // if(isOutside(newPos.x, newPos.y, width, height))
+    //     newPos = float2(midX, midY);
     
     agent.pos = newPos;
     TrailMap[int2(agent.pos.x, agent.pos.y)] = float4(specie.color, 1);

@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -96,16 +97,19 @@ public class Controller : MonoBehaviour
         diffuseTrailTexture = Util.createRenderTexture(_settings.width, _settings.height, 24);
         
         GetComponent<RawImage>().texture = diffuseTrailTexture;
-
+        
         int speciesCount = _settings.species.Length;
 
+        Vector2 screenMid = new Vector2(_settings.width / 2f, _settings.height / 2f);
+        
         agents = new Agent[_settings.agentCount];
         for (int i = 0; i < agents.Length; i++)
         {
             agents[i] = new Agent()
             {
                 // pos = new Vector2(Random.Range(0, _settings.width), Random.Range(0, _settings.height)),
-                pos = new Vector2(_settings.width/2f, _settings.height/2f),
+                // pos = new Vector2(_settings.width/2f, _settings.height/2f),
+                pos = screenMid + Random.insideUnitCircle*(Math.Min(_settings.width, _settings.height)*0.25f),
                 angle = Util.getRandomAngle(),
                 speciesIndex = Random.Range(0, speciesCount)
             };
