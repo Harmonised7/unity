@@ -8,14 +8,16 @@ public class Controller : MonoBehaviour
 {
     const int agentKernel = 0;
     const int diffuseKernel = 1;
-    const int colorKernel = 1;
+    // const int colorKernel = 2;
     
     public SimSettings _settings;
     RenderTexture trailTexture, diffuseTrailTexture, renderTexture;
     
     public ComputeShader _agentComputeShader;
-    ComputeBuffer computeBuffer;
+    ComputeBuffer agentsBuffer;
     private Agent[] agents;
+    
+    ComputeBuffer speciesBuffer;
     
     // public Material mat;
     public Vector2 pos, smoothPos;
@@ -94,7 +96,9 @@ public class Controller : MonoBehaviour
         diffuseTrailTexture = Util.createRenderTexture(_settings.width, _settings.height, 24);
         
         GetComponent<RawImage>().texture = diffuseTrailTexture;
-        
+
+        int speciesCount = _settings.species.Length;
+
         agents = new Agent[_settings.agentCount];
         for (int i = 0; i < agents.Length; i++)
         {
@@ -103,19 +107,23 @@ public class Controller : MonoBehaviour
                 // pos = new Vector2(Random.Range(0, _settings.width), Random.Range(0, _settings.height)),
                 pos = new Vector2(_settings.width/2f, _settings.height/2f),
                 angle = Util.getRandomAngle(),
-                speed = Random.Range(_settings.minSpeed, _settings.maxSpeed)
+                speciesIndex = Random.Range(0, speciesCount)
             };
         }
 
-        Util.createAndSetBuffer(ref computeBuffer, agents, _agentComputeShader, "agents", kernelIndex: agentKernel);
+        Util.createAndSetBuffer(ref agentsBuffer, agents, _agentComputeShader, "agents", kernelIndex: agentKernel);
+        Util.createAndSetBuffer(ref speciesBuffer, _settings.species, _agentComputeShader, "species", kernelIndex: agentKernel);
+        // Util.createStructuredBuffer(ref speciesBuffer, species);
+        // _agentComputeShader.SetBuffer(agentKernel, "species", speciesBuffer);
+
         _agentComputeShader.SetInt("agentCount", _settings.agentCount);
         _agentComputeShader.SetTexture(agentKernel, "TrailMap", trailTexture);
         
         _agentComputeShader.SetTexture(diffuseKernel, "TrailMap", trailTexture);
         _agentComputeShader.SetTexture(diffuseKernel, "DiffusedTrailMap", diffuseTrailTexture);
         
-        _agentComputeShader.SetTexture(colorKernel, "TrailMap", trailTexture);
-        _agentComputeShader.SetTexture(colorKernel, "DiffusedTrailMap", diffuseTrailTexture);
+        // _agentComputeShader.SetTexture(colorKernel, "TrailMap", trailTexture);
+        // _agentComputeShader.SetTexture(colorKernel, "DiffusedTrailMap", diffuseTrailTexture);
     }
 
     private void runSim()
@@ -137,14 +145,13 @@ public class Controller : MonoBehaviour
     
     void OnDestroy()
     {
-
-        Util.releaseBuffers(computeBuffer);
+        Util.releaseBuffers(agentsBuffer, speciesBuffer);
     }
     
     struct Agent
     {
         public Vector2 pos;
         public float angle;
-        public float speed;
+        public int speciesIndex;
     };
 }

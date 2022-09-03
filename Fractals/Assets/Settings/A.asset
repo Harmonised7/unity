@@ -13,11 +13,33 @@ MonoBehaviour:
   m_Name: A
   m_EditorClassIdentifier: 
   stepsPerFrame: 1
-  width: 1920
-  height: 1080
-  agentCount: 100000
-  minSpeed: 60
-  maxSpeed: 90
+  width: 600
+  height: 300
+  agentCount: 999
+  minSpeed: 200
+  maxSpeed: 500
   trailWeight: 1
   decayRate: 1
   diffuseRate: 1
+  species:
+  - moveSpeed: 100
+    turnSpeed: 0.1
+    mask: {x: 0, y: 1, z: 0}
+    sensorAngleOffset: 10
+    sensorDistanceOffset: 50
+    sensorSize: 3
+    color: {x: 1, y: 0, z: 0}
+  - moveSpeed: 50
+    turnSpeed: 1
+    mask: {x: 0, y: 0, z: 1}
+    sensorAngleOffset: 45
+    sensorDistanceOffset: 10
+    sensorSize: 4
+    color: {x: 0, y: 1, z: 0}
+  - moveSpeed: 70
+    turnSpeed: 0.05
+    mask: {x: 1, y: 0, z: 0}
+    sensorAngleOffset: 15
+    sensorDistanceOffset: 70
+    sensorSize: 3
+    color: {x: 0, y: 0, z: 1}

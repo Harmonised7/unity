@@ -63,10 +63,15 @@ public class Util : MonoBehaviour
     
     public static void createAndSetBuffer<T>(ref ComputeBuffer buffer, T[] data, ComputeShader cs, string nameID, int kernelIndex = 0)
     {
-        int stride = System.Runtime.InteropServices.Marshal.SizeOf(typeof(T));
+        // int stride = System.Runtime.InteropServices.Marshal.SizeOf(typeof(T));
+        createStructuredBuffer(ref buffer, data);
+        cs.SetBuffer(kernelIndex, nameID, buffer);
+    }
+    
+    public static void createStructuredBuffer<T>(ref ComputeBuffer buffer, T[] data)
+    {
         createStructuredBuffer<T>(ref buffer, data.Length);
         buffer.SetData(data);
-        cs.SetBuffer(kernelIndex, nameID, buffer);
     }
     
     public static void createStructuredBuffer<T>(ref ComputeBuffer buffer, int count)

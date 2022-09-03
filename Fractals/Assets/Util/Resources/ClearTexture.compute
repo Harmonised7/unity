@@ -1,8 +1,7 @@
-// Each #kernel tells which function to compile; you can have many kernels
+#include "Assets/Util/Util.hlsl"
+
 #pragma kernel CSMain
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
 RWTexture2D<float4> Source;
 uint width;
 uint height;
@@ -10,9 +9,8 @@ uint height;
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    if (id.x < 0 || id.x >= width || id.y < 0 || id.y >= height) {
+    if (isOutside(id.x, id.y, width, height))
         return;
-    }
 
     Source[id.xy] = float4(0, 0, 0, 1);
 }

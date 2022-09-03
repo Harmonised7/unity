@@ -17,4 +17,23 @@ public class SimSettings : ScriptableObject
     public float trailWeight = 1;
     public float decayRate = 1;
     public float diffuseRate = 1;
+
+    public Specie[] species;
+    
+    [System.Serializable]
+    public struct Specie
+    {
+        [Header("Movement")]
+        public float moveSpeed;
+        public float turnSpeed;
+
+        [Header("Sensor")]
+        public Vector3 mask;
+        [Min(0)]public float sensorAngleOffset;
+        public float sensorDistanceOffset;
+        public int sensorSize;
+        
+        [Header("Display")]
+        public Vector3 color;
+    };
 }

@@ -4,13 +4,52 @@ struct Agent
 {
     float2 pos;
     float angle;
-    float speed;
+    int specieIndex;
+};
+
+struct Specie
+{
+    float moveSpeed;
+    float turnSpeed;
+
+    float3 mask;
+    float sensorAngleOffset;
+    float sensorDistanceOffset;
+    int sensorSize;
+        
+    float3 color;
 };
 
 RWTexture2D<float4> TrailMap, DiffusedTrailMap;
 float width, height, midX, midY, time, deltaTime;
 
 RWStructuredBuffer<Agent> agents;
+StructuredBuffer<Specie> species;
+
+float sense(Agent agent, float sensorDegreeMultiplier)
+{
+    const Specie specie = species[agent.specieIndex];
+    const float2 sensorMid = agent.pos + getDir(agent.angle + specie.sensorAngleOffset*sensorDegreeMultiplier) * specie.sensorDistanceOffset;
+    const int sensorX = sensorMid.x;
+    const int sensorY = sensorMid.y;
+    const int startX = limitWithinRange(sensorX-specie.sensorSize, 0, width);
+    const int endX = limitWithinRange(sensorX+specie.sensorSize, 0, width);
+    const int startY = limitWithinRange(sensorY-specie.sensorSize, 0, height);
+    const int endY = limitWithinRange(sensorY+specie.sensorSize, 0, height);
+    float sum = 0;
+
+    float4 senseWeight = float4(specie.mask, 1) * 2 - 1;
+    
+    for(int x = startX; x < endX; ++x)
+    {
+        for(int y = startY; y < endY; ++y)
+        {
+            sum += dot(senseWeight, TrailMap[int2(x, y)]);
+        }
+    }
+    
+    return sum;
+}
 
 #pragma kernel Update
 
@@ -18,25 +57,32 @@ RWStructuredBuffer<Agent> agents;
 void Update(uint3 id : SV_DispatchThreadID)
 {
     Agent agent = agents[id.x];
+    Specie specie = species[agent.specieIndex];
 
     float2 direction = getDir(agent.angle);
-    float2 newPos = agent.pos + direction * agent.speed * deltaTime;
+    float2 newPos = agent.pos + direction * specie.moveSpeed * deltaTime;
     float random = scaleToRange01(hash(time*id.x));
-    
-    // if(random < 0.0001*agent.speed)
-    //     agent.angle += (random-0.5)*agent.angle;
+
+    float weightLeft = sense(agent, -1);
+    float weightForward = sense(agent, 0);
+    float weightRight = sense(agent, 1);
+
+    if(weightLeft > weightForward && weightLeft > weightRight)
+        agent.angle -= specie.turnSpeed;
+    else if(weightRight > weightLeft && weightRight > weightForward)
+        agent.angle += specie.turnSpeed;
 
     if(isOutside(newPos.x, newPos.y, width, height))
     {
         agent.angle = random * 2 * 3.1415;
         direction = getDir(agent.angle);
-        newPos = agent.pos + direction * agent.speed * deltaTime;
+        newPos = agent.pos + direction * specie.moveSpeed * deltaTime;
     }
     if(isOutside(newPos.x, newPos.y, width, height))
-        newPos = float2(random*width, random*height);
+        newPos = float2(midX, midY);
     
     agent.pos = newPos;
-    TrailMap[int2(agent.pos.x, agent.pos.y)] = 1;
+    TrailMap[int2(agent.pos.x, agent.pos.y)] = float4(specie.color, 1);
     // TrailMap[int2(agent.pos.x, agent.pos.y)] = float4(agent.angle%1, (agent.angle*1.5)%1, (agent.angle*2.25)%1, 1);
     // TrailMap[int2(agent.pos.x, agent.pos.y)] = float4((agent.angle*20)%1, newPos.x/width, newPos.y/height, 1);
     // TrailMap[int2(agent.pos.x, agent.pos.y)] = float4(agent.speed/1000, (agent.angle*agent.speed)%0.5, agent.speed/10000, 1);
@@ -75,11 +121,11 @@ void Diffuse(uint3 id : SV_DispatchThreadID)
     DiffusedTrailMap[id.xy] = max(0, blurredCol - 0.01 * deltaTime);
 }
 
-#pragma kernel Color
-
-[numthreads(8,8,1)]
-void Color(uint3 id : SV_DispatchThreadID)
-{
-    // float greyscale = DiffusedTrailMap[id.xy].x;
-    // TrailMap[id.xy] = 1;
-}
+// #pragma kernel Color
+//
+// [numthreads(8,8,1)]
+// void Color(uint3 id : SV_DispatchThreadID)
+// {
+//     float greyscale = DiffusedTrailMap[id.xy].x;
+//     TrailMap[id.xy] = 1;
+// }
