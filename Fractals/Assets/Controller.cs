@@ -24,6 +24,9 @@ public class Controller : MonoBehaviour
     // public Material mat;
     public Vector2 pos, smoothPos;
     public float scale, smoothScale, angle, smoothAngle;
+    public int oldAgentCount, oldWidth, oldHeight, oldSpeciesSize;
+    public float oldSpawnRadius;
+    public SimSettings.SpawnType oldSpawnType;
     
     // Start is called before the first frame update
     void Start()
@@ -91,17 +94,39 @@ public class Controller : MonoBehaviour
 
     }
 
-    private void Init()
+    public void checkUpdate()
     {
+        if
+            (   oldAgentCount != _settings.agentCount
+             || oldWidth != _settings.width
+             || oldHeight != _settings.height
+             || oldSpawnRadius != _settings.spawnRadius
+             || oldSpawnType != _settings.spawnType
+             || oldSpeciesSize != _settings.species.Length
+            )
+        {
+            oldAgentCount = _settings.agentCount;
+            oldWidth = _settings.width;
+            oldHeight = _settings.height;
+            oldSpawnRadius = _settings.spawnRadius;
+            oldSpawnType = _settings.spawnType;
+            oldSpeciesSize = _settings.species.Length;
+            Init();
+        }
+    }
+
+    public void Init()
+    {
+        _settings.setController(this);
+        
         renderTexture = Util.createRenderTexture(_settings.width, _settings.height, 24);
         trailTexture = Util.createRenderTexture(_settings.width, _settings.height, 24);
         diffuseTrailTexture = Util.createRenderTexture(_settings.width, _settings.height, 24);
         
         GetComponent<RawImage>().texture = diffuseTrailTexture;
-        
         int speciesCount = _settings.species.Length;
         Vector2 screenMid = new Vector2(_settings.width / 2f, _settings.height / 2f);
-        
+
         agents = new Agent[_settings.agentCount];
         for (int i = 0; i < agents.Length; i++)
         {
@@ -159,9 +184,8 @@ public class Controller : MonoBehaviour
                 speciesIndex = Random.Range(0, speciesCount)
             };
         }
-
         Util.createAndSetBuffer(ref agentsBuffer, agents, _agentComputeShader, "agents", kernelIndex: agentKernel);
-        Util.createAndSetBuffer(ref speciesBuffer, _settings.species, _agentComputeShader, "species", kernelIndex: agentKernel);
+
         // Util.createStructuredBuffer(ref speciesBuffer, species);
         // _agentComputeShader.SetBuffer(agentKernel, "species", speciesBuffer);
 
@@ -177,6 +201,8 @@ public class Controller : MonoBehaviour
 
     private void runSim()
     {
+        Util.createAndSetBuffer(ref speciesBuffer, _settings.species, _agentComputeShader, "species", kernelIndex: agentKernel);
+
         //Agents
         _agentComputeShader.SetFloat("width", _settings.width);
         _agentComputeShader.SetFloat("height", _settings.height);
@@ -185,6 +211,7 @@ public class Controller : MonoBehaviour
         _agentComputeShader.SetFloat("deltaTime", Time.fixedDeltaTime);
         _agentComputeShader.SetFloat("time", Time.fixedTime);
         _agentComputeShader.SetFloat("diffusionRate", _settings.diffusionRate);
+        _agentComputeShader.SetInt("trailSize", _settings.trailSize);
         
         _agentComputeShader.Dispatch(agentKernel, Math.Min(65000, _settings.agentCount), 1, 1);
         _agentComputeShader.Dispatch(diffuseKernel, _settings.width, _settings.height, 1);

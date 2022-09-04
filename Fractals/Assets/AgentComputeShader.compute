@@ -22,6 +22,7 @@ struct Specie
 
 RWTexture2D<float4> TrailMap, DiffusedTrailMap;
 float width, height, midX, midY, time, deltaTime, diffusionRate;
+int trailSize;
 
 RWStructuredBuffer<Agent> agents;
 StructuredBuffer<Specie> species;
@@ -66,11 +67,13 @@ void Update(uint3 id : SV_DispatchThreadID)
     float weightLeft = sense(agent, -1);
     float weightForward = sense(agent, 0);
     float weightRight = sense(agent, 1);
-    float weight = max(max(weightLeft, weightForward), weightRight);
+    float sideWeight = max(weightLeft, weightRight);
 
-    if(weight == weightLeft)
+    if(weightForward <= sideWeight)
+        agent.angle += ((specie.turnSpeed*2) - specie.turnSpeed);
+    else if(sideWeight == weightLeft)
         agent.angle = approachValue(agent.angle, agent.angle - specie.sensorAngleOffset, specie.turnSpeed);
-    else if(weight == weightRight)
+    else if(sideWeight == weightRight)
         agent.angle = approachValue(agent.angle, agent.angle + specie.sensorAngleOffset, specie.turnSpeed);
 
     // if(weight == weightLeft)
@@ -78,22 +81,33 @@ void Update(uint3 id : SV_DispatchThreadID)
     // else if(weight == weightRight)
     //     agent.angle += specie.turnSpeed*random;
     
-    // weight = limitWithinRange(sqrt(weight), 1, 1.523f);
+    // sideWeight = limitWithinRange(sqrt(sideWeight), 1, 1.523f);
 
     float2 direction = getDir(agent.angle);
     float2 newPos = agent.pos + direction * specie.moveSpeed * deltaTime;
 
-    while(isOutside(newPos.x, newPos.y, width, height))
+    if(isOutside(newPos.x, newPos.y, width, height))
     {
-        agent.angle = random * 2 * 3.1415;
+        agent.angle = agent.angle - 200 + random*40;
         direction = getDir(agent.angle);
-        newPos = agent.pos + direction * specie.moveSpeed * 10 * deltaTime;
+        newPos = agent.pos + direction * specie.moveSpeed * 3 * deltaTime;
     }
     // if(isOutside(newPos.x, newPos.y, width, height))
     //     newPos = float2(midX, midY);
     
     agent.pos = newPos;
-    TrailMap[int2(agent.pos.x, agent.pos.y)] = float4(specie.color, 1);
+    const int startX = max(0, agent.pos.x - trailSize);
+    const int startY = max(0, agent.pos.y - trailSize);
+    const int endX = min(width, agent.pos.x + trailSize);
+    const int endY = min(height, agent.pos.y + trailSize);
+    for(int x = startX; x <= endX; ++x)
+    {
+        for(int y = startY; y <= endY; ++y)
+        {
+            TrailMap[int2(x, y)] = float4(specie.color, 1);
+        }
+    }
+    
     // TrailMap[int2(agent.pos.x, agent.pos.y)] = float4(agent.angle%1, (agent.angle*1.5)%1, (agent.angle*2.25)%1, 1);
     // TrailMap[int2(agent.pos.x, agent.pos.y)] = float4((agent.angle*20)%1, newPos.x/width, newPos.y/height, 1);
     // TrailMap[int2(agent.pos.x, agent.pos.y)] = float4(agent.speed/1000, (agent.angle*agent.speed)%0.5, agent.speed/10000, 1);
