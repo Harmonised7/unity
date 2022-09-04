@@ -7,7 +7,7 @@ using UnityEngine;
 [CreateAssetMenu()]
 public class SimSettings : ScriptableObject
 {
-    public Controller controller;
+    private Controller controller;
     
     public const float deg180inRad = 1.57075f;
     
@@ -23,7 +23,7 @@ public class SimSettings : ScriptableObject
     public SpawnType spawnType;
     
     [Header("Trail Settings")]
-    [Range(0, 5)]public int trailSize = 1;
+    [Range(1, 5)]public int trailSize = 1;
     // public float decayRate = 1;
     [Range(0, 5f)]public float diffusionRate = 0.25f;
 
@@ -34,7 +34,7 @@ public class SimSettings : ScriptableObject
     {
         [Header("Movement")]
         [Range(0, 500)]public float moveSpeed;
-        [Range(-deg180inRad, deg180inRad)]public float turnSpeed;
+        [Range(-0.25f, 0.25f)]public float turnSpeed;
 
         [Header("Sensor")]
         public Vector3 mask;

@@ -217,6 +217,13 @@ public class Controller : MonoBehaviour
         _agentComputeShader.Dispatch(diffuseKernel, _settings.width, _settings.height, 1);
         // _agentComputeShader.Dispatch(colorKernel, _settings.width, _settings.height, 1);
         
+        // agentsBuffer.GetData(agents);
+        //
+        // Debug.Log("start");
+        // Debug.Log(agents[0].debug1);
+        // Debug.Log(agents[0].debug2);
+        // Debug.Log(agents[0].debug3);
+        
         Util.copyRenderTexture(diffuseTrailTexture, trailTexture);
     }
     
@@ -230,5 +237,8 @@ public class Controller : MonoBehaviour
         public Vector2 pos;
         public float angle;
         public int speciesIndex;
+        // public float debug1;
+        // public float debug2;
+        // public float debug3;
     };
 }
