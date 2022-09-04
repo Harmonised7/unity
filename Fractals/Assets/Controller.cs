@@ -1,5 +1,6 @@
 using System;
 using TMPro;
+using Unity.Mathematics;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -99,18 +100,62 @@ public class Controller : MonoBehaviour
         GetComponent<RawImage>().texture = diffuseTrailTexture;
         
         int speciesCount = _settings.species.Length;
-
         Vector2 screenMid = new Vector2(_settings.width / 2f, _settings.height / 2f);
         
         agents = new Agent[_settings.agentCount];
         for (int i = 0; i < agents.Length; i++)
         {
+            Vector2 pos;
+            float angle = Util.getRandomAngle();;
+
+            switch(_settings.spawnType)
+            {
+                case SimSettings.SpawnType.edges:
+                    int result = Random.Range(0, 4);
+                    switch (result)
+                    {
+                        //Top
+                        case 0:
+                            pos = new Vector2(Random.Range(0, _settings.width), _settings.height);
+                            break;
+                        
+                        //Bottom
+                        case 1:
+                            pos = new Vector2(Random.Range(0, _settings.width), 0);
+                            break;
+                        
+                        //Left
+                        case 2:
+                            pos = new Vector2(0, Random.Range(0, _settings.height));
+                            break;
+                        
+                        default:
+                        //Right
+                        case 3:
+                            pos = new Vector2(_settings.width, Random.Range(0, _settings.height));
+                            break;
+                    }
+                    
+                    break;
+                
+                case SimSettings.SpawnType.random:
+                    pos = Util.getRandomPos(_settings.width, _settings.height);
+                    break;
+                
+                case SimSettings.SpawnType.hollow_circle:
+                    pos = screenMid + Util.getDir(Util.getRandomAngle(), _settings.spawnRadius);
+                    break;
+                
+                default:
+                case SimSettings.SpawnType.circle:
+                    pos = screenMid + Random.insideUnitCircle * _settings.spawnRadius;
+                    break;
+            }
+            
             agents[i] = new Agent()
             {
-                // pos = new Vector2(Random.Range(0, _settings.width), Random.Range(0, _settings.height)),
-                // pos = new Vector2(_settings.width/2f, _settings.height/2f),
-                pos = screenMid + Random.insideUnitCircle*(Math.Min(_settings.width, _settings.height)*0.25f),
-                angle = Util.getRandomAngle(),
+                pos = pos,
+                angle = angle,
                 speciesIndex = Random.Range(0, speciesCount)
             };
         }
@@ -139,6 +184,7 @@ public class Controller : MonoBehaviour
         _agentComputeShader.SetFloat("midY", _settings.height/2f);
         _agentComputeShader.SetFloat("deltaTime", Time.fixedDeltaTime);
         _agentComputeShader.SetFloat("time", Time.fixedTime);
+        _agentComputeShader.SetFloat("diffusionRate", _settings.diffusionRate);
         
         _agentComputeShader.Dispatch(agentKernel, Math.Min(65000, _settings.agentCount), 1, 1);
         _agentComputeShader.Dispatch(diffuseKernel, _settings.width, _settings.height, 1);

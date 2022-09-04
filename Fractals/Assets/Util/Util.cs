@@ -42,25 +42,35 @@ public class Util : MonoBehaviour
         return p;
     }
 
+    public static Vector2 getDir(float angle, float length = 1)
+    {
+        return new Vector2(MathF.Cos(angle) * length, MathF.Sin(angle) * length);
+    }
+
     public static float getRandomAngle()
     {
         return Random.value * Mathf.PI * 2;
     }
-    
-    /*
-    // Start is called before the first frame update
-    void Start()
+
+    public static Vector2 getRandomPos(Vector2 boundA, Vector2 boundB)
     {
-        
+        return getRandomPos(boundA.x, boundB.x, boundA.y, boundB.y);
+    }
+    
+    public static Vector2 getRandomPos(float aX, float aY, float bX = 0, float bY = 0)
+    {
+        return new Vector2(Random.Range(aX, bX), Random.Range(aY, bY));
+    }
+    
+    public static float approachValue(float input, float goal, float step)
+    {
+        if(input == goal) 
+            return input;
+        return input < goal ?
+            MathF.Min(input + step, goal) :
+            MathF.Max(input - step, goal);
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-    */
-    
     public static void createAndSetBuffer<T>(ref ComputeBuffer buffer, T[] data, ComputeShader cs, string nameID, int kernelIndex = 0)
     {
         // int stride = System.Runtime.InteropServices.Marshal.SizeOf(typeof(T));

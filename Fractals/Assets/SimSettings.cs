@@ -9,9 +9,13 @@ public class SimSettings : ScriptableObject
     public int stepsPerFrame = 1;
     public int width = 512;
     public int height = 512;
+    
+    [Header("Initial Spawn")]
+    [Min(0)]
     public int agentCount = 100;
-    public float minSpeed = 10;
-    public float maxSpeed = 100;
+
+    public float spawnRadius = 100;
+    public SpawnType spawnType;
     
     [Header("Trail Settings")]
     public float trailWeight = 1;
@@ -19,7 +23,7 @@ public class SimSettings : ScriptableObject
     public float diffusionRate = 0.25f;
 
     public Specie[] species;
-    
+
     [System.Serializable]
     public struct Specie
     {
@@ -36,4 +40,12 @@ public class SimSettings : ScriptableObject
         [Header("Display")]
         public Vector3 color;
     };
+
+    public enum SpawnType
+    {
+        random,
+        edges,
+        circle,
+        hollow_circle
+    }
 }

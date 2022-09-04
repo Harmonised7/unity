@@ -92,3 +92,12 @@ bool isOutside(float posX, float posY, float width, float height)
 {
     return posX < 0 || posX >= width || posY < 0 || posY >= height;
 }
+
+float approachValue(float input, float goal, float step)
+{
+    if(input == goal) 
+        return input;
+    return input < goal ?
+        min(input + step, goal) :
+        max(input - step, goal);
+}

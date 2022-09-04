@@ -69,14 +69,19 @@ void Update(uint3 id : SV_DispatchThreadID)
     float weight = max(max(weightLeft, weightForward), weightRight);
 
     if(weight == weightLeft)
-        agent.angle -= specie.turnSpeed;
+        agent.angle = approachValue(agent.angle, agent.angle - specie.sensorAngleOffset, specie.turnSpeed);
     else if(weight == weightRight)
-        agent.angle += specie.turnSpeed;
+        agent.angle = approachValue(agent.angle, agent.angle + specie.sensorAngleOffset, specie.turnSpeed);
 
-    //MAYBE LIMIT EFFECT OF WEIGHT?
+    // if(weight == weightLeft)
+    //     agent.angle -= specie.turnSpeed*random;
+    // else if(weight == weightRight)
+    //     agent.angle += specie.turnSpeed*random;
+    
+    // weight = limitWithinRange(sqrt(weight), 1, 1.523f);
 
     float2 direction = getDir(agent.angle);
-    float2 newPos = agent.pos + direction * specie.moveSpeed * weight * deltaTime;
+    float2 newPos = agent.pos + direction * specie.moveSpeed * deltaTime;
 
     while(isOutside(newPos.x, newPos.y, width, height))
     {
