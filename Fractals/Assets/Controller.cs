@@ -145,7 +145,7 @@ public class Controller : MonoBehaviour
 
             switch(_settings.spawnType)
             {
-                case SimSettings.SpawnType.edges:
+                case SimSettings.SpawnType.Edges:
                     int result = Random.Range(0, 4);
                     switch (result)
                     {
@@ -173,22 +173,37 @@ public class Controller : MonoBehaviour
                     
                     break;
                 
-                case SimSettings.SpawnType.random:
+                case SimSettings.SpawnType.Random:
                     pos = Util.getRandomPos(_settings.width, _settings.height);
                     break;
                 
-                case SimSettings.SpawnType.hollow_circle:
+                case SimSettings.SpawnType.CircleRandom:
                     pos = screenMid + Util.getDir(Util.getRandomAngle(), _settings.spawnRadius);
                     break;
                 
+                case SimSettings.SpawnType.CircleInside:
+                    pos = screenMid + Util.getDir(Util.getRandomAngle(), _settings.spawnRadius);
+                    angle = Mathf.Atan2((screenMid - pos).normalized.y, (screenMid - pos).normalized.x);
+                    break;
+                
+                case SimSettings.SpawnType.CircleOutside:
+                    pos = screenMid + Util.getDir(Util.getRandomAngle(), _settings.spawnRadius);
+                    angle = Mathf.Atan2((screenMid - pos).normalized.y, (screenMid - pos).normalized.x) + 3.1415f;
+                    break;
+                
+                case SimSettings.SpawnType.CircleEye:
+                    pos = screenMid + Util.getDir(Util.getRandomAngle(), _settings.spawnRadius);
+                    angle = 3.1415f - Mathf.Atan2((screenMid - pos).normalized.y, (screenMid - pos).normalized.x);
+                    break;
+                
                 default:
-                case SimSettings.SpawnType.circle:
+                case SimSettings.SpawnType.CircleFull:
                     pos = screenMid + Random.insideUnitCircle * _settings.spawnRadius;
                     break;
             }
 
-            // if (Util.isOutside(pos.x, pos.y, _settings.width, _settings.height))
-            //     pos = screenMid;
+            if (Util.isOutside(pos.x, pos.y, _settings.width, _settings.height))
+                pos = screenMid;
             
             agents[i] = new Agent()
             {

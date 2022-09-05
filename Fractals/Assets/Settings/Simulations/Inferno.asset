@@ -10,28 +10,31 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 959c71347f0cff947bf12ee4342db6b1, type: 3}
-  m_Name: A
+  m_Name: Inferno
   m_EditorClassIdentifier: 
   stepsPerFrame: 1
   width: 1920
   height: 1080
-  agentCount: 10000
-  spawnRadius: 200
-  spawnType: 1
+  agentCount: 25000
+  spawnRadius: 1
+  spawnType: 5
   trailSize: 1
-  diffusionRate: 0.23
+  trailWeight: 3
+  diffusionRate: 0.25
   species:
-  - moveSpeed: 200
-    turnSpeed: 0.01
-    mask: {x: 1, y: 1, z: 1}
-    sensorAngleOffset: 0.3
-    sensorDistanceOffset: 500
-    sensorSize: 1
-    color: {x: 1, y: 0.125, z: 0.25}
   - moveSpeed: 50
-    turnSpeed: 0.2
-    mask: {x: 1, y: 0.25, z: 0.25}
-    sensorAngleOffset: 1.52
-    sensorDistanceOffset: 30
+    turnSpeed: 15
+    dejavuTurn: 0
+    wanderIntensity: 2
+    sensorAngleOffset: 0.785375
+    sensorDistanceOffset: 100
     sensorSize: 1
-    color: {x: 0, y: 1, z: 1}
+    color: {x: 0.78, y: 0.5, z: 0.2}
+  - moveSpeed: 35
+    turnSpeed: 8.1
+    dejavuTurn: 1
+    wanderIntensity: 0.25
+    sensorAngleOffset: 1.93
+    sensorDistanceOffset: 75
+    sensorSize: 1
+    color: {x: 0.8301887, y: 0.4716012, z: 0.1}

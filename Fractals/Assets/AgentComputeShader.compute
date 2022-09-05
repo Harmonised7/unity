@@ -17,7 +17,7 @@ struct Specie
     int dejavuTurn;
     float wanderIntensity;
 
-    float3 mask;
+    // float3 wants;
     float sensorAngleOffset;
     float sensorDistanceOffset;
     int sensorSize;

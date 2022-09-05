@@ -39,7 +39,7 @@ public class SimSettings : ScriptableObject
         [Range(0, 2)]public float wanderIntensity;
 
         [Header("Sensor")]
-        public Vector3 mask;
+        // public Vector3 wants;
         [Range(0, deg180inRad*2)]public float sensorAngleOffset;
         [Range(0, 500)]public float sensorDistanceOffset;
         [Range(1, 5)]public int sensorSize;
@@ -50,10 +50,13 @@ public class SimSettings : ScriptableObject
 
     public enum SpawnType
     {
-        random,
-        edges,
-        circle,
-        hollow_circle
+        Random,
+        Edges,
+        CircleFull,
+        CircleRandom,
+        CircleInside,
+        CircleOutside,
+        CircleEye
     }
 
     public void setController(Controller controller)
