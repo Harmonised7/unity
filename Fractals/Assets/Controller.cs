@@ -8,6 +8,16 @@ using Random = UnityEngine.Random;
 
 public class Controller : MonoBehaviour
 {
+    struct Agent
+    {
+        public Vector2 pos;
+        public float angle;
+        public int speciesIndex;
+        // public float debug1;
+        // public float debug2;
+        // public float debug3;
+    }
+    
     const int agentKernel = 0;
     const int diffuseKernel = 1;
     // const int colorKernel = 2;
@@ -176,6 +186,9 @@ public class Controller : MonoBehaviour
                     pos = screenMid + Random.insideUnitCircle * _settings.spawnRadius;
                     break;
             }
+
+            // if (Util.isOutside(pos.x, pos.y, _settings.width, _settings.height))
+            //     pos = screenMid;
             
             agents[i] = new Agent()
             {
@@ -211,6 +224,7 @@ public class Controller : MonoBehaviour
         _agentComputeShader.SetFloat("deltaTime", Time.fixedDeltaTime);
         _agentComputeShader.SetFloat("time", Time.fixedTime);
         _agentComputeShader.SetFloat("diffusionRate", _settings.diffusionRate);
+        _agentComputeShader.SetFloat("trailWeight", _settings.trailWeight);
         _agentComputeShader.SetInt("trailSize", _settings.trailSize);
         
         _agentComputeShader.Dispatch(agentKernel, Math.Min(65000, _settings.agentCount), 1, 1);
@@ -220,7 +234,7 @@ public class Controller : MonoBehaviour
         // agentsBuffer.GetData(agents);
         //
         // Debug.Log("start");
-        // Debug.Log(agents[0].debug1);
+        // Debug.Log(agents[0].angle);
         // Debug.Log(agents[0].debug2);
         // Debug.Log(agents[0].debug3);
         
@@ -231,14 +245,4 @@ public class Controller : MonoBehaviour
     {
         Util.releaseBuffers(agentsBuffer, speciesBuffer);
     }
-    
-    struct Agent
-    {
-        public Vector2 pos;
-        public float angle;
-        public int speciesIndex;
-        // public float debug1;
-        // public float debug2;
-        // public float debug3;
-    };
 }

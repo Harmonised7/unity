@@ -14,6 +14,8 @@ struct Specie
 {
     float moveSpeed;
     float turnSpeed;
+    int dejavuTurn;
+    float wanderIntensity;
 
     float3 mask;
     float sensorAngleOffset;
@@ -24,7 +26,7 @@ struct Specie
 };
 
 RWTexture2D<float4> TrailMap, DiffusedTrailMap;
-float width, height, midX, midY, time, deltaTime, diffusionRate;
+float width, height, midX, midY, time, deltaTime, diffusionRate, trailWeight;
 int trailSize;
 
 RWStructuredBuffer<Agent> agents;
@@ -42,7 +44,8 @@ float sense(Agent agent, float sensorDegreeMultiplier)
     // const int endY = limitWithinRange(sensorY+specie.sensorSize, 0, height);
     float sum = 0;
 
-    float4 senseWeight = float4(specie.mask, 0);
+    float4 senseWeight = float4(specie.color, 0);
+    // float4 senseWeight = float4(specie.mask, 0);
 
     // const int startX = max(0, sensorMid.x - 3);
     // const int startY = max(0, sensorMid.y - 3);
@@ -52,7 +55,7 @@ float sense(Agent agent, float sensorDegreeMultiplier)
     // {
     //     for(int y = startY; y <= endY; ++y)
     //     {
-    //         TrailMap[int2(x, y)] = 1;
+    //         TrailMap[int2(x, y)] = float4(0, 1, 0, 1);
     //     }
     // }
     
@@ -71,21 +74,22 @@ float sense(Agent agent, float sensorDegreeMultiplier)
 
 #pragma kernel Update
 
-[numthreads(32,1,1)]
+[numthreads(16,1,1)]
 void Update(uint3 id : SV_DispatchThreadID)
 {
     Agent agent = agents[id.x];
-    Specie specie = species[agent.specieIndex];
+    const Specie specie = species[agent.specieIndex];
     
-    float random = scaleToRange01(hash(time+id.x));
+    const float random = scaleToRange01(hash(time+id.x));
 
-    float weightLeft = sense(agent, -1);
-    float weightForward = sense(agent, 0);
-    float weightRight = sense(agent, 1);
-    float sideWeight = max(weightLeft, weightRight);
-    bool sideZero = sideWeight <= 0;
+    const float weightLeft = sense(agent, -1);
+    const float weightForward = sense(agent, 0);
+    const float weightRight = sense(agent, 1);
+    const float sideWeight = max(weightLeft, weightRight);
+    const bool sideZero = sideWeight <= 0;
+    const float turnSpeed = specie.turnSpeed * (specie.dejavuTurn == 0 ? 1 : -1) * deltaTime;
     if(sideZero && weightForward <= 0)
-        agent.angle += (specie.turnSpeed*2*random) - specie.turnSpeed;
+        agent.angle += (random - 0.5) * turnSpeed * specie.wanderIntensity;
     else
     {
         if(weightForward > sideWeight)
@@ -95,16 +99,16 @@ void Update(uint3 id : SV_DispatchThreadID)
         else if(!sideZero)
         {
             if(sideWeight == weightLeft)
-                agent.angle = approachValue(agent.angle, agent.angle - specie.sensorAngleOffset, specie.turnSpeed);
+                agent.angle = approachValue(agent.angle, agent.angle - specie.sensorAngleOffset, turnSpeed);
             else if(sideWeight == weightRight)
-                agent.angle = approachValue(agent.angle, agent.angle + specie.sensorAngleOffset, specie.turnSpeed);
+                agent.angle = approachValue(agent.angle, agent.angle + specie.sensorAngleOffset, turnSpeed);
         }
     }
 
     // if(weight == weightLeft)
-    //     agent.angle -= specie.turnSpeed*random;
+    //     agent.angle -= turnSpeed*random;
     // else if(weight == weightRight)
-    //     agent.angle += specie.turnSpeed*random;
+    //     agent.angle += turnSpeed*random;
     
     // sideWeight = limitWithinRange(sqrt(sideWeight), 1, 1.523f);
 
@@ -129,7 +133,9 @@ void Update(uint3 id : SV_DispatchThreadID)
     {
         for(int y = startY; y <= endY; ++y)
         {
-            TrailMap[int2(x, y)] = float4(specie.color, 1);
+            const int2 pixelPos = int2(x, y);
+            const float3 oldTrail = TrailMap[pixelPos];
+            TrailMap[pixelPos] = float4(min(1, oldTrail + specie.color * trailWeight * deltaTime), 1);
         }
     }
     
@@ -149,7 +155,7 @@ void Update(uint3 id : SV_DispatchThreadID)
 [numthreads(8,8,1)]
 void Diffuse(uint3 id : SV_DispatchThreadID)
 {
-    // const float4 originalCol = TrailMap[id.xy];
+    const float4 originalCol = TrailMap[id.xy];
     float4 sum = 0;
     // 3x3 blur
     for(int offsetX = -1; offsetX <= 1; ++offsetX)
@@ -165,17 +171,8 @@ void Diffuse(uint3 id : SV_DispatchThreadID)
     }
 
     float4 blurredCol = sum / 9;
-    blurredCol = float4(blurredCol.x, blurredCol.y, blurredCol.z, 1);
-    // float diffuseWeight = saturate(diffuseRate * deltaTime);
-    // blurredCol = originalCol * (1 - diffuseWeight) + blurredCol * (diffuseWeight);
-    DiffusedTrailMap[id.xy] = max(0, blurredCol - diffusionRate * deltaTime);
+    const float diffuseWeight = saturate(diffusionRate * deltaTime);
+    blurredCol = originalCol * (1 - diffuseWeight) + blurredCol * (diffuseWeight);
+    float3 result = max(0, blurredCol - diffusionRate * deltaTime);
+    DiffusedTrailMap[id.xy] = float4(result, 1);
 }
-
-// #pragma kernel Color
-//
-// [numthreads(8,8,1)]
-// void Color(uint3 id : SV_DispatchThreadID)
-// {
-//     float greyscale = DiffusedTrailMap[id.xy].x;
-//     TrailMap[id.xy] = 1;
-// }

@@ -13,18 +13,25 @@ MonoBehaviour:
   m_Name: A
   m_EditorClassIdentifier: 
   stepsPerFrame: 1
-  width: 1000
-  height: 500
-  agentCount: 100
-  spawnRadius: 100
-  spawnType: 3
+  width: 1920
+  height: 1080
+  agentCount: 10000
+  spawnRadius: 200
+  spawnType: 1
   trailSize: 1
-  diffusionRate: 0.11
+  diffusionRate: 0.23
   species:
-  - moveSpeed: 190
-    turnSpeed: 0.31
+  - moveSpeed: 200
+    turnSpeed: 0.01
     mask: {x: 1, y: 1, z: 1}
-    sensorAngleOffset: 1.3
-    sensorDistanceOffset: 28
-    sensorSize: 3
-    color: {x: 1, y: 1, z: 1}
+    sensorAngleOffset: 0.3
+    sensorDistanceOffset: 500
+    sensorSize: 1
+    color: {x: 1, y: 0.125, z: 0.25}
+  - moveSpeed: 50
+    turnSpeed: 0.2
+    mask: {x: 1, y: 0.25, z: 0.25}
+    sensorAngleOffset: 1.52
+    sensorDistanceOffset: 30
+    sensorSize: 1
+    color: {x: 0, y: 1, z: 1}

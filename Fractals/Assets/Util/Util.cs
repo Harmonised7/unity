@@ -145,4 +145,9 @@ public class Util : MonoBehaviour
     {
         Graphics.Blit(source, target);
     }
+    
+    public static bool isOutside(float posX, float posY, float width, float height)
+    {
+        return posX < 0 || posX >= width || posY < 0 || posY >= height;
+    }
 }
