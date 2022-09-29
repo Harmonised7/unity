@@ -24,8 +24,8 @@ public class SimSettings : ScriptableObject
     
     [Header("Trail Settings")]
     [Range(1, 5)]public int trailSize = 1;
-    [Range(0, 100)]public float trailWeight = 0.5f;
-    [Range(0, 5f)]public float diffusionRate = 0.25f;
+    [Range(0, 10)]public float trailWeight = 0.5f;
+    [Range(0, 3f)]public float diffusionRate = 0.25f;
 
     public Specie[] species;
 
@@ -34,15 +34,15 @@ public class SimSettings : ScriptableObject
     {
         [Header("Movement")]
         [Range(0, 500)]public float moveSpeed;
-        [Range(0, 100f)]public float turnSpeed;
+        [Range(0, 10f)]public float turnSpeed;
         [Range(0, 1)] public int dejavuTurn;
-        [Range(0, 2)]public float wanderIntensity;
+        [Range(0, 5)]public float wanderIntensity;
 
         [Header("Sensor")]
         // public Vector3 wants;
         [Range(0, deg180inRad*2)]public float sensorAngleOffset;
         [Range(0, 500)]public float sensorDistanceOffset;
-        [Range(1, 5)]public int sensorSize;
+        [Range(1, 1)]public int sensorSize;
         
         [Header("Display")]
         public Vector3 color;
