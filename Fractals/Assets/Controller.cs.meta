@@ -4,7 +4,8 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
-  - mat: {fileID: 2100000, guid: ad7437c9aa908ddcaa9a8ff3f0420afb, type: 2}
+  - _settings: {fileID: 11400000, guid: edeb108ca3a97e892b7b2a993123fd3e, type: 2}
+  - _agentComputeShader: {fileID: 7200000, guid: 560e2bc2cb7c9180080bdd86f93e0e94, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
